@@ -1,0 +1,25 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.py[cod]
+secrets/
+
+# Application configuration & state cache
+config.toml
+*.cache
+dyndns.cache
+
+# Rust build target
+/target
+
+# Staged release artifacts (binaries + shipped config/secrets)
+/release
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

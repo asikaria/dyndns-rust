@@ -1,0 +1,18 @@
+# Cloudflare Credentials & Targets
+zone_id = "your-zone-id"
+record_name = "home.example.com"
+
+# Optional overrides (preserves Cloudflare settings if omitted)
+# proxied = false
+# ttl = 300 # minimum is 60s, or 1 for automatic
+
+# Client Caching & Fetchers
+# Relative path works for manual runs from the cwd; the systemd installer
+# overrides this to /var/cache/dyndns/dyndns.cache.
+cache_file = "./dyndns.cache"
+endpoints = [
+    "https://checkip.amazonaws.com",
+    "https://icanhazip.com",
+    "https://api.ipify.org",
+    "https://ifconfig.me"
+]
