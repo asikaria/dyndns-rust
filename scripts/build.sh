@@ -17,10 +17,15 @@ log_error() {
 cd "$(dirname "$0")/.."
 
 BIN_NAME="dyndns"
-CROSS_TARGET="aarch64-unknown-linux-gnu"
 RELEASE_DIR="release"
 
-# cross handles the ARM64 Linux toolchain inside a container (needs Docker/Podman)
+# Linux cross targets to build, formatted as "rust-triple:release-subdir".
+CROSS_TARGETS=(
+    "aarch64-unknown-linux-gnu:arm64-linux"
+    "x86_64-unknown-linux-gnu:amd64-linux"
+)
+
+# cross handles the Linux toolchains inside a container (needs Docker/Podman)
 if ! command -v cross &> /dev/null; then
     log_error "cross is not installed. Install it with: cargo install cross --git https://github.com/cross-rs/cross"
     exit 1
@@ -36,8 +41,13 @@ esac
 log_info "1. Native release build ($HOST_TRIPLE)..."
 cargo build --release
 
-log_info "2. Cross release build ($CROSS_TARGET)..."
-cross build --target "$CROSS_TARGET" --release
+step=2
+for entry in "${CROSS_TARGETS[@]}"; do
+    triple="${entry%%:*}"
+    log_info "$step. Cross release build ($triple)..."
+    cross build --target "$triple" --release
+    step=$((step + 1))
+done
 
 # Copies the binary plus the files we ship to a target machine into a staging dir,
 # preferring the real secret/config files and falling back to the templates.
@@ -64,11 +74,19 @@ stage_payload() {
     fi
 }
 
-log_info "3. Staging release artifacts in $RELEASE_DIR/..."
+log_info "$step. Staging release artifacts in $RELEASE_DIR/..."
 rm -rf "$RELEASE_DIR"
 stage_payload "$RELEASE_DIR/native" "target/release/$NATIVE_BIN"
-stage_payload "$RELEASE_DIR/$CROSS_TARGET" "target/$CROSS_TARGET/release/$BIN_NAME"
+for entry in "${CROSS_TARGETS[@]}"; do
+    triple="${entry%%:*}"
+    subdir="${entry##*:}"
+    stage_payload "$RELEASE_DIR/$subdir" "target/$triple/release/$BIN_NAME"
+done
 
 log_info "Build complete. Release artifacts:"
 echo "  - $RELEASE_DIR/native/ (native: $HOST_TRIPLE)"
-echo "  - $RELEASE_DIR/$CROSS_TARGET/ ($CROSS_TARGET)"
+for entry in "${CROSS_TARGETS[@]}"; do
+    triple="${entry%%:*}"
+    subdir="${entry##*:}"
+    echo "  - $RELEASE_DIR/$subdir/ ($triple)"
+done

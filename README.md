@@ -12,11 +12,12 @@ reference, building, and cross-compiling, see the
 `scripts/build.sh` produces a `release/<target>/` directory containing the
 binary, `config.toml`, `.env`, `README.md`, and `scripts/install.sh`. To deploy:
 
-1. Copy the contents of the appropriate release subdirectory (e.g.
-   `release/aarch64-unknown-linux-gnu/`) to a temp directory on the target host:
+1. Copy the contents of the appropriate release subdirectory for the target's
+   architecture (`release/arm64-linux/` or `release/amd64-linux/`) to a temp
+   directory on the target host:
 
    ```bash
-   scp release/aarch64-unknown-linux-gnu/* user@host:/tmp/dyndns-install/
+   scp release/arm64-linux/* user@host:/tmp/dyndns-install/
    ```
 
 2. On the target, run the installer as root:

@@ -218,10 +218,10 @@ dyndns --force
 ## 4. Installation & Scheduling
 
 ### Option A: Automated system install (Recommended)
-`scripts/build.sh` stages a `release/<target>/` directory containing the binary, `config.toml`, `.env`, `README.md`, and `scripts/install.sh`. Copy that directory's contents to a temp dir on the target and run the installer as root:
+`scripts/build.sh` stages a `release/<target>/` directory (`arm64-linux` or `amd64-linux`) containing the binary, `config.toml`, `.env`, `README.md`, and `scripts/install.sh`. Copy the matching directory's contents to a temp dir on the target and run the installer as root:
 
 ```bash
-scp release/aarch64-unknown-linux-gnu/* user@host:/tmp/dyndns-install/
+scp release/arm64-linux/* user@host:/tmp/dyndns-install/
 ssh user@host
 sudo bash /tmp/dyndns-install/install.sh
 ```
