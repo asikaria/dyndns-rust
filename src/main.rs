@@ -89,7 +89,7 @@ fn load_config(
         }
     };
 
-    log::info!("Loading configuration from {:?}", path);
+    log::debug!("Loading configuration from {:?}", path);
     let content = std::fs::read_to_string(&path)?;
     let config: Config = toml::from_str(&content)?;
     Ok((config, path))
@@ -118,7 +118,7 @@ fn fetch_public_ip(endpoints: &[String]) -> Result<std::net::Ipv4Addr, Box<dyn s
                         let trimmed = text.trim();
                         match trimmed.parse::<std::net::Ipv4Addr>() {
                             Ok(ip) => {
-                                log::info!("Successfully retrieved IP: {}", ip);
+                                log::debug!("Successfully retrieved IP: {}", ip);
                                 return Ok(ip);
                             }
                             Err(e) => {
@@ -336,7 +336,7 @@ fn find_api_token_in_env_files(config_path: Option<&std::path::Path>) -> Option<
                         if key_trimmed == "CLOUDFLARE_API_TOKEN" {
                             let token = val.trim().trim_matches('"').trim_matches('\'').to_string();
                             if !token.is_empty() {
-                                log::info!("Loaded API Token from {:?}", path);
+                                log::debug!("Loaded API Token from {:?}", path);
                                 return Some(token);
                             }
                         }
@@ -399,7 +399,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    log::info!("Fetching current public IPv4 address...");
+    log::debug!("Fetching current public IPv4 address...");
     let public_ip = match fetch_public_ip(&config.endpoints) {
         Ok(ip) => ip,
         Err(e) => {
@@ -416,7 +416,7 @@ fn main() {
         );
         std::process::exit(0);
     } else if args.force {
-        log::info!("Bypassing cache check (--force active).");
+        log::debug!("Bypassing cache check (--force active).");
     }
 
     let http_client = match reqwest::blocking::Client::builder()
@@ -431,7 +431,7 @@ fn main() {
         }
     };
 
-    log::info!(
+    log::debug!(
         "Retrieving DNS record '{}' from Cloudflare...",
         config.record_name
     );
@@ -474,20 +474,20 @@ fn main() {
             if let Err(e) = write_cached_ip(&cache_file_path, public_ip) {
                 log::warn!("Failed to update local cache file: {}", e);
             } else {
-                log::info!("Local IP cache file updated.");
+                log::debug!("Local IP cache file updated.");
             }
         }
         std::process::exit(0);
     }
 
     if ip_changed {
-        log::info!(
+        log::debug!(
             "IP change detected! Cloudflare: {} -> Current: {}",
             existing_record.content,
             public_ip
         );
     } else {
-        log::info!(
+        log::debug!(
             "IP unchanged ({}); syncing record settings (ttl: {} -> {}, proxied: {} -> {}).",
             public_ip,
             existing_record.ttl,
@@ -512,7 +512,7 @@ fn main() {
         std::process::exit(0);
     }
 
-    log::info!("Updating Cloudflare DNS record...");
+    log::debug!("Updating Cloudflare DNS record...");
     match update_cloudflare_dns_record(
         &http_client,
         &config.zone_id,
@@ -524,11 +524,18 @@ fn main() {
         new_proxied,
     ) {
         Ok(_) => {
-            log::info!("Successfully updated Cloudflare DNS record.");
+            log::info!(
+                "Updated {}: {} -> {} (ttl: {}, proxied: {})",
+                config.record_name,
+                existing_record.content,
+                public_ip,
+                new_ttl,
+                new_proxied
+            );
             if let Err(e) = write_cached_ip(&cache_file_path, public_ip) {
                 log::warn!("Failed to update local cache file: {}", e);
             } else {
-                log::info!("Local IP cache file updated.");
+                log::debug!("Local IP cache file updated.");
             }
         }
         Err(e) => {
